@@ -1,44 +1,14 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-
-const AuthContext = createContext();
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
-      setLoading(false);
-    };
-
-    getSession();
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
-      else setProfile(null);
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  const fetchProfile = async (userId) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    setProfile(data);
-  };
-
-  const isAdmin = user?.email === 'admin@tumnishe.com' || profile?.role === 'admin';
-
+import { useNavigate } from 'react-router-dom'
+export default function TaskCard({ task }: { task: any }) {
+  const navigate = useNavigate()
   return (
-    <AuthContext.Provider value={{ user, profile, isAdmin, loading, fetchProfile }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => useContext(AuthContext);
+    <div className="border p-4 rounded-lg shadow-sm bg-white">
+      <h3 className="font-bold text-lg">{task.title}</h3>
+      <p>Earn: ₦{task.reward}</p>
+      <p className="text-sm text-gray-500">Slots: {task.joined}/{task.max_users}</p>
+      <p className="text-sm text-red-500">Deadline: {new Date(task.deadline).toLocaleString()}</p>
+      <button onClick={() => navigate(`/submit/${task.id}`)} className="mt-2 bg-blue-500 text-white px-3 py-1 rounded">Submit Proof</button>
+    </div>
+  )
+}
+  
